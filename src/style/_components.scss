@@ -73,9 +73,14 @@ body {
   font-size: $font-base;
   transition: all $transition-fast;
 
-  &:hover {
+  &:hover:not(:disabled) {
     border-color: var(--border-hover);
     background: var(--surface-raised);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: default;
   }
 
   .icon-sun { display: none; }
@@ -205,6 +210,37 @@ body {
     &:active {
       cursor: grabbing;
     }
+  }
+}
+
+.btn-zoom-fit {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: $radius-sm;
+  background: var(--bg-panel);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  z-index: 5;
+  transition: all $transition-fast;
+  backdrop-filter: var(--backdrop);
+  -webkit-backdrop-filter: var(--backdrop);
+
+  &:hover:not(:disabled) {
+    border-color: var(--border-hover);
+    background: var(--surface-raised);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: default;
   }
 }
 
@@ -555,7 +591,7 @@ body {
 // ─── Pencil Viz ─────────────────────────────────────────────────
 .water-viz {
   flex-shrink: 0;
-  height: 120px;
+  height: 220px;
   overflow: hidden;
   cursor: crosshair;
   position: relative;

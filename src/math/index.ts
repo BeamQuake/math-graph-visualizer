@@ -2,7 +2,7 @@ export { Parser, ParseError } from './parser';
 export { evaluate, isFiniteNumber } from './evaluator';
 export { differentiate } from './differentiate';
 export { simplify, exprToString } from './simplify';
-export { analyzeFunction } from './calculus';
+export { analyzeFunction, computeDefiniteIntegral, findNearestZeros, extractPolynomialCoeffs, solveQuadratic, findExtremaAlgebraic } from './calculus';
 export type { CalculusResult } from './calculus';
 export { PRESETS, getParamDisplay } from './presets';
 export type { FunctionPreset } from './types';

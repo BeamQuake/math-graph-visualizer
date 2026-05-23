@@ -1,6 +1,6 @@
 import './style/main.scss';
 
-import { Parser, differentiate, analyzeFunction, buildExpression } from './math';
+import { Parser, differentiate, simplify, analyzeFunction, buildExpression } from './math';
 import type { Expr, DerivativeInfo, PointOfInterest, ThemeColors, ThemeMode, FunctionParams } from './math/types';
 
 import { GraphCanvas } from './render/canvas';
@@ -22,6 +22,7 @@ let points: PointOfInterest[] = [];
 let currentTheme: ThemeMode = 'dark';
 let showHelpers = false;
 let showLabels = true;
+let showIntegral = false;
 
 function getThemeColors(mode: ThemeMode): ThemeColors {
   if (mode === 'dark') {
@@ -36,7 +37,7 @@ function getThemeColors(mode: ThemeMode): ThemeColors {
       f3: '#ffb347',
       max: '#ff4757',
       min: '#2ed573',
-      inflection: '#ffa502',
+      inflection: '#af7ac5',
       zero: '#747d8c',
       text: '#c8d0e0',
       textDim: 'rgba(200,208,224,0.5)',
@@ -54,7 +55,7 @@ function getThemeColors(mode: ThemeMode): ThemeColors {
     f3: '#cc7700',
     max: '#c0392b',
     min: '#00855e',
-    inflection: '#cc5500',
+    inflection: '#8e44ad',
     zero: '#555555',
     text: '#1a2332',
     textDim: 'rgba(26,35,50,0.55)',
@@ -87,17 +88,19 @@ derivToggles.onLabelsChange((on) => {
   updateGraph();
 });
 
+derivToggles.onIntegralChange((on) => {
+  showIntegral = on;
+  updateGraph();
+});
+
 const infoPanel = new InfoPanel();
 let highlightedPoint = -1;
 infoPanel.onHighlight((idx) => {
   highlightedPoint = idx ?? -1;
   updateGraph();
 });
-
 const controls = new Controls();
 controls.onChange((state) => {
-  graph.resetCamera();
-  graph.setInitialScale();
   onFunctionChanged(state.params);
 });
 
@@ -118,9 +121,9 @@ function onFunctionChanged(params: FunctionParams): void {
   try {
     fExpr = Parser.parse(exprStr);
 
-    const f1 = differentiate(fExpr);
-    const f2 = differentiate(f1);
-    const f3 = differentiate(f2);
+    const f1 = simplify(differentiate(fExpr));
+    const f2 = simplify(differentiate(f1));
+    const f3 = simplify(differentiate(f2));
 
     derivatives = [
       { order: 1, visible: derivatives[0].visible, expr: f1 },
@@ -128,13 +131,7 @@ function onFunctionChanged(params: FunctionParams): void {
       { order: 3, visible: derivatives[2].visible, expr: f3 },
     ];
 
-    const range = graph.getVisibleRange();
-    const padX = (range.xMax - range.xMin) * 0.1;
-    const result = analyzeFunction(
-      fExpr, f1, f2, f3,
-      range.xMin - padX,
-      range.xMax + padX,
-    );
+    const result = analyzeFunction(fExpr, f1, f2, f3, -200, 200);
 
     points = [...result.zeros, ...result.extrema, ...result.inflectionPoints];
     updateGraph();
@@ -156,13 +153,21 @@ function updateGraph(): void {
     pointsOfInterest: points,
     showHelpers,
     showLabels,
+    integralEnabled: showIntegral,
     colors,
     highlightedPoint,
   };
 
   graph.setConfig(config);
   infoPanel.update(points, colors);
+
+  const zoomBtn = document.getElementById('btn-zoom-fit');
+  if (zoomBtn) (zoomBtn as HTMLButtonElement).disabled = points.length === 0;
 }
+
+document.getElementById('btn-zoom-fit')?.addEventListener('click', () => {
+  if (points.length > 0) graph.animateToFit(points);
+});
 
 graph.setInitialScale();
 graph.start();

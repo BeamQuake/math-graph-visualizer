@@ -5,12 +5,14 @@ import type { PlotOptions } from './plot';
 import { drawGrid } from './grid';
 import { drawMarkers } from './markers';
 import { evaluate } from '../math/evaluator';
+import { computeDefiniteIntegral, findNearestZeros } from '../math/calculus';
 
 export interface GraphConfig {
   fExpr: Expr | null;
   derivatives: DerivativeInfo[];
   pointsOfInterest: PointOfInterest[];
   showHelpers: boolean;
+  integralEnabled: boolean;
   showLabels: boolean;
   colors: ThemeColors;
   highlightedPoint: number;
@@ -24,6 +26,7 @@ export class GraphCanvas {
   private rafId: number = 0;
   private config: GraphConfig | null = null;
   private hoverWorld: { x: number; y: number } | null = null;
+  private pointerScreen: { x: number; y: number } = { x: 0, y: 0 };
 
   private logicalW = 0;
   private logicalH = 0;
@@ -52,7 +55,8 @@ export class GraphCanvas {
   }
 
   start(): void {
-    const loop = () => {
+    const loop = (now: number) => {
+      this.camera.tick(now);
       this.render();
       this.rafId = requestAnimationFrame(loop);
     };
@@ -82,6 +86,31 @@ export class GraphCanvas {
     const s = this.logicalW / 22;
     this.camera.scale = s;
     this.camera.targetScale = s;
+  }
+
+  animateToFit(points: PointOfInterest[]): void {
+    if (points.length === 0) return;
+
+    let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+    for (const p of points) {
+      if (p.x < xMin) xMin = p.x;
+      if (p.x > xMax) xMax = p.x;
+      if (p.y < yMin) yMin = p.y;
+      if (p.y > yMax) yMax = p.y;
+    }
+
+    const padFrac = 0.2;
+    const xPad = Math.max((xMax - xMin) * padFrac, 2);
+    const yPad = Math.max((yMax - yMin) * padFrac, 2);
+
+    const cx = (xMin + xMax) / 2;
+    const cy = (yMin + yMax) / 2;
+
+    const scaleX = this.logicalW / (xMax - xMin + xPad * 2);
+    const scaleY = this.logicalH / (yMax - yMin + yPad * 2);
+    const scale = Math.max(5, Math.min(500, Math.min(scaleX, scaleY)));
+
+    this.camera.animateTo({ offsetX: cx, offsetY: cy, scale });
   }
 
   private render(): void {
@@ -114,7 +143,11 @@ export class GraphCanvas {
 
     drawMarkers(this.ctx, this.camera, w, h, cfg.pointsOfInterest, cfg.colors, cfg.showLabels, cfg.highlightedPoint);
 
-    if (cfg.showHelpers && this.hoverWorld !== null) {
+    if (cfg.integralEnabled && this.hoverWorld !== null && cfg.fExpr) {
+      this.drawIntegral(cfg);
+    }
+
+    if ((cfg.showHelpers || cfg.integralEnabled) && this.hoverWorld !== null) {
       this.drawHelpers(cfg.colors);
     }
   }
@@ -184,9 +217,123 @@ export class GraphCanvas {
     this.ctx.fillStyle = colors.textDim;
     this.ctx.textAlign = 'left';
     this.ctx.textBaseline = 'bottom';
-    const tx = Math.min(sx + 10, w - 60);
-    const ty = Math.max(sy - 10, 16);
+    const tx = Math.min(Math.max(sx + 10, 4), w - 60);
+    const ty = Math.min(Math.max(sy - 10, 16), h - 4);
     this.ctx.fillText(label, tx, ty);
+
+    this.ctx.restore();
+  }
+
+  private f(expr: Expr, x: number): number {
+    try { return evaluate(expr, { x }); } catch { return NaN; }
+  }
+
+  private drawIntegral(cfg: GraphConfig): void {
+    if (!this.hoverWorld || !cfg.fExpr) return;
+
+    const cursorX = this.hoverWorld.x;
+    const zeroPoints = cfg.pointsOfInterest.filter(p => p.kind === 'zero');
+    const { left, right } = findNearestZeros(zeroPoints, cursorX);
+
+    const s = this.camera.scale;
+    const w = this.logicalW;
+    const h = this.logicalH;
+
+    const integrals: { fromX: number; toX: number; value: number; label: string }[] = [];
+
+    if (left !== null) {
+      const fromX = left;
+      const toX = cursorX;
+      const value = computeDefiniteIntegral(cfg.fExpr, fromX, toX);
+      integrals.push({ fromX, toX, value, label: `∫(${formatCoord(left)} → ·) = ${formatCoord(value)}` });
+    }
+
+    if (right !== null) {
+      const fromX = cursorX;
+      const toX = right;
+      const value = computeDefiniteIntegral(cfg.fExpr, fromX, toX);
+      integrals.push({ fromX, toX, value, label: `∫(· → ${formatCoord(right)}) = ${formatCoord(value)}` });
+    }
+
+    if (integrals.length === 0) return;
+
+    // Draw area fills in world coordinates
+    this.ctx.save();
+    this.ctx.transform(s, 0, 0, -s, w / 2 - this.camera.offsetX * s, h / 2 + this.camera.offsetY * s);
+
+    for (const iv of integrals) {
+      const { fromX, toX, value } = iv;
+      const numSamples = 200;
+      const step = (toX - fromX) / numSamples;
+
+      this.ctx.beginPath();
+      let first = true;
+      for (let i = 0; i <= numSamples; i++) {
+        const x = fromX + i * step;
+        const y = this.f(cfg.fExpr, x);
+        if (!Number.isFinite(y)) continue;
+        if (first) {
+          this.ctx.moveTo(x, y);
+          first = false;
+        } else {
+          this.ctx.lineTo(x, y);
+        }
+      }
+      if (first) continue;
+
+      this.ctx.lineTo(toX, 0);
+      this.ctx.lineTo(fromX, 0);
+      this.ctx.closePath();
+
+      this.ctx.fillStyle = value >= 0 ? 'rgba(0,200,100,0.25)' : 'rgba(200,50,50,0.25)';
+      this.ctx.fill();
+    }
+
+    this.ctx.restore();
+
+    // Draw tooltip label in screen coordinates
+    const lineH = 18;
+    const padX = 14;
+    const padY = 7;
+    const px = this.pointerScreen.x;
+    const py = this.pointerScreen.y;
+
+    this.ctx.save();
+    this.ctx.font = 'bold 13px system-ui, sans-serif';
+
+    let maxW = 0;
+    for (const iv of integrals) {
+      const m = this.ctx.measureText(iv.label);
+      if (m.width > maxW) maxW = m.width;
+    }
+    const bw = maxW + padX * 2;
+    const bh = integrals.length * lineH + padY * 2;
+
+    let bx = px + 15;
+    let by = py - 10 - bh;
+    bx = Math.min(bx, w - bw - 10);
+    by = Math.max(by, 10);
+
+    const bg = this.cssVar('--bg-panel');
+    const border = this.cssVar('--border');
+    const text = this.cssVar('--text');
+
+    this.ctx.fillStyle = bg;
+    this.ctx.beginPath();
+    this.ctx.roundRect(bx, by, bw, bh, 4);
+    this.ctx.fill();
+    this.ctx.strokeStyle = border;
+    this.ctx.lineWidth = 1;
+    this.ctx.stroke();
+
+    this.ctx.fillStyle = text;
+    this.ctx.textAlign = 'left';
+    this.ctx.textBaseline = 'top';
+    let labelY = by + padY;
+    for (const iv of integrals) {
+      this.ctx.fillText(iv.label, bx + padX, labelY);
+      labelY += lineH;
+    }
 
     this.ctx.restore();
   }
@@ -284,6 +431,7 @@ export class GraphCanvas {
     const rect = this.canvas.getBoundingClientRect();
     const x = cx - rect.left;
     const y = cy - rect.top;
+    this.pointerScreen = { x, y };
 
     if (this.isDragging) {
       const dx = x - this.dragStartX;
@@ -316,6 +464,10 @@ export class GraphCanvas {
     const dx = touches[0].clientX - touches[1].clientX;
     const dy = touches[0].clientY - touches[1].clientY;
     return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  private cssVar(name: string): string {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   }
 }
 

@@ -123,7 +123,11 @@ function buildReciprocal(params: FunctionParams): string {
 
 function buildGaussian(params: FunctionParams): string {
   const { a = 1, b = 0, c = 1 } = params.extra;
-  return `${a}*exp(-(x-${b})^2/(2*${c}^2))`;
+  const sigma2 = c * c;
+  const inner = b === 0 ? 'x' : b < 0 ? `(x+${-b})` : `(x-${b})`;
+  const prefix = a === 1 ? '' : `${a}*`;
+  if (sigma2 === 1) return `${prefix}exp(-${inner}^2/2)`;
+  return `${prefix}exp(-${inner}^2/(2*${sigma2}))`;
 }
 
 function buildRational(params: FunctionParams): string {

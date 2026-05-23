@@ -10,9 +10,11 @@ export class DerivativeToggles {
   private state: DerivativeState = { 1: false, 2: false, 3: false };
   private helpersOn = false;
   private labelsOn = true;
+  private integralOn = false;
   private listeners: Array<(state: DerivativeState) => void> = [];
   private helperListeners: Array<(on: boolean) => void> = [];
   private labelListeners: Array<(on: boolean) => void> = [];
+  private integralListeners: Array<(on: boolean) => void> = [];
 
   constructor() {
     document.querySelectorAll('[data-derivative]').forEach((el) => {
@@ -39,6 +41,14 @@ export class DerivativeToggles {
         this.labelListeners.forEach((fn) => fn(this.labelsOn));
       });
     }
+
+    const integralToggle = document.querySelector('#toggle-integral .toggle-checkbox') as HTMLInputElement;
+    if (integralToggle) {
+      integralToggle.addEventListener('change', () => {
+        this.integralOn = integralToggle.checked;
+        this.integralListeners.forEach((fn) => fn(this.integralOn));
+      });
+    }
   }
 
   onChange(fn: (state: DerivativeState) => void): void {
@@ -53,6 +63,10 @@ export class DerivativeToggles {
     this.labelListeners.push(fn);
   }
 
+  onIntegralChange(fn: (on: boolean) => void): void {
+    this.integralListeners.push(fn);
+  }
+
   getState(): DerivativeState {
     return { ...this.state };
   }
@@ -63,6 +77,10 @@ export class DerivativeToggles {
 
   getLabelsOn(): boolean {
     return this.labelsOn;
+  }
+
+  getIntegralOn(): boolean {
+    return this.integralOn;
   }
 
   private notify(): void {

@@ -6,6 +6,7 @@ export class PencilViz {
   private a = 3;
   private b = 4;
   private delta = Math.PI / 2;
+  private hue = 0;
 
   constructor(container: HTMLElement) {
     this.canvas = document.createElement('canvas');
@@ -26,33 +27,35 @@ export class PencilViz {
     this.canvas.style.height = `${rect.height}px`;
   }
 
-  private isLight() {
-    return document.body.classList.contains('theme-light');
-  }
-
-  private strokeColor() {
-    const alpha = 0.06 + Math.random() * 0.14;
-    if (this.isLight()) {
-      return `rgba(40, 35, 30, ${alpha})`;
-    }
-    return `rgba(170, 170, 190, ${alpha + 0.04})`;
-  }
-
   private newPattern() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.t = 0;
     this.a = 2 + Math.floor(Math.random() * 5);
     this.b = 3 + Math.floor(Math.random() * 5);
     this.delta = Math.random() * Math.PI;
+    this.hue = Math.random() * 360;
   }
 
   private point(t: number) {
-    const decay = Math.exp(-t * 0.015);
-    const s = Math.min(this.canvas.width, this.canvas.height) * 0.38 * decay;
+    const decay = Math.exp(-t * 0.01);
+    const s = Math.min(this.canvas.width, this.canvas.height) * 0.42 * decay;
     return {
       x: this.canvas.width / 2 + Math.sin(this.a * t + this.delta) * s,
       y: this.canvas.height / 2 + Math.sin(this.b * t) * s,
     };
+  }
+
+  private strokeColor() {
+    const hue = (this.hue + this.t * 12) % 360;
+    const sat = 60 + Math.random() * 30;
+    const lit = 50 + Math.random() * 30;
+    const alpha = 0.08 + Math.random() * 0.12;
+    return `hsla(${hue}, ${sat}%, ${lit}%, ${alpha})`;
+  }
+
+  private glowColor() {
+    const hue = (this.hue + this.t * 8) % 360;
+    return `hsla(${hue}, 70%, 55%, 0.04)`;
   }
 
   private tick = () => {
@@ -61,11 +64,24 @@ export class PencilViz {
     const p1 = this.point(this.t + dt);
     this.t += dt;
 
-    if (this.t > Math.PI * 2 * 8) {
+    if (this.t > Math.PI * 2 * 12) {
       this.newPattern();
     }
 
-    for (let i = 0; i < 6; i++) {
+    // Glow layer — thick faint strokes behind main
+    for (let i = 0; i < 8; i++) {
+      const ox = (Math.random() - 0.5) * 2;
+      const oy = (Math.random() - 0.5) * 2;
+      this.ctx.beginPath();
+      this.ctx.moveTo(p0.x + ox, p0.y + oy);
+      this.ctx.lineTo(p1.x + ox, p1.y + oy);
+      this.ctx.strokeStyle = this.glowColor();
+      this.ctx.lineWidth = 3 + Math.random() * 2;
+      this.ctx.stroke();
+    }
+
+    // Main strokes — colorful, sharper
+    for (let i = 0; i < 12; i++) {
       const ox = (Math.random() - 0.5) * 1.5;
       const oy = (Math.random() - 0.5) * 1.5;
       const jx = (Math.random() - 0.5) * 0.4;
@@ -74,7 +90,7 @@ export class PencilViz {
       this.ctx.moveTo(p0.x + ox, p0.y + oy);
       this.ctx.lineTo(p1.x + ox + jx, p1.y + oy + jy);
       this.ctx.strokeStyle = this.strokeColor();
-      this.ctx.lineWidth = 0.2 + Math.random() * 0.6;
+      this.ctx.lineWidth = 0.3 + Math.random() * 1.2;
       this.ctx.stroke();
     }
 

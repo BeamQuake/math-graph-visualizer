@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatExpression } from './format';
+import { formatExpression, renderEToThe } from './format';
 
 function stripHtml(s: string): string {
   return s.replace(/<[^>]+>/g, '');
@@ -64,5 +64,97 @@ describe('formatExpression', () => {
       const result = stripHtml(formatExpression('2*3'));
       expect(result).toBe('2·3');
     });
+  });
+});
+
+describe('formatExpression edge cases', () => {
+  it('returns dash for empty string', () => {
+    expect(formatExpression('')).toContain('math-op');
+    expect(formatExpression('')).toContain('—');
+  });
+
+  it('returns empty set symbol for input that simplifies to nothing', () => {
+    const result = formatExpression('0*x + 0');
+    expect(result).toContain('∅');
+  });
+
+  it('handles leading + sign: + 5', () => {
+    const result = formatExpression('+ 5');
+    expect(stripHtml(result)).toBe('5');
+  });
+
+  it('handles leading - sign: - 5', () => {
+    const result = formatExpression('- 5');
+    expect(stripHtml(result)).toBe('-5');
+  });
+
+  it('removes trivial multiplication: 1*x → x', () => {
+    expect(stripHtml(formatExpression('1*x'))).toBe('x');
+  });
+
+  it('removes zero*var: 0*x', () => {
+    expect(stripHtml(formatExpression('0*x + 5'))).toBe('5');
+  });
+
+  it('removes + 0 terms: x + 0', () => {
+    expect(stripHtml(formatExpression('x + 0'))).toBe('x');
+  });
+
+  it('replaces x^1 with x', () => {
+    expect(stripHtml(formatExpression('x^1 + 5'))).toBe('x + 5');
+  });
+
+  it('handles expressions with constants', () => {
+    const result = formatExpression('2*x + 5');
+    expect(stripHtml(result)).toBe('2x + 5');
+  });
+
+  it('converts exp( to e^(', () => {
+    const result = formatExpression('exp(x)');
+    expect(result).toContain('e');
+  });
+
+  it('handles nested parentheses with exp: exp((x+1)*2)', () => {
+    const result = formatExpression('exp((x+1)*2)');
+    expect(result).toContain('math-sup');
+  });
+
+  it('handles unbalanced parentheses in exp gracefully', () => {
+    const result = formatExpression('exp(x+1');
+    expect(stripHtml(result)).toBeTruthy();
+  });
+});
+
+describe('renderEToThe', () => {
+  it('renders e^(x) with span classes', () => {
+    const result = renderEToThe('e^(x)');
+    expect(result).toContain('<span class="math-const">e</span>');
+    expect(result).toContain('<span class="math-sup">(x)</span>');
+  });
+
+  it('renders multiple e^ expressions', () => {
+    const result = renderEToThe('e^(x) + e^(2*x)');
+    expect(result.match(/math-const/g)?.length).toBe(2);
+    expect(result.match(/math-sup/g)?.length).toBe(2);
+  });
+
+  it('leaves non-e^ text unchanged', () => {
+    const result = renderEToThe('x + 5');
+    expect(result).toBe('x + 5');
+  });
+
+  it('handles empty string', () => {
+    expect(renderEToThe('')).toBe('');
+  });
+
+  it('handles nested parens in exponent: e^((x+1)*(x-1))', () => {
+    const result = renderEToThe('e^((x+1)*(x-1))');
+    expect(result).toContain('(x+1)*(x-1)');
+    expect(result).toContain('math-sup');
+  });
+
+  it('handles unbalanced e^( gracefully', () => {
+    const result = renderEToThe('e^(x+1');
+    expect(result).toBe('e^(x+1');
   });
 });

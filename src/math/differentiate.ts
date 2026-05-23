@@ -79,31 +79,45 @@ export function differentiate(expr: Expr, variable: string = 'x'): Expr {
           const f = expr.left;
           const g = expr.right;
 
-          // Special case: x^n (variable^n with constant exponent)
-          // Use power rule: n * x^(n-1)
-          if (f.kind === 'variable' && g.kind === 'number') {
+          // f^n (constant exponent): use power rule + chain rule: n * f^(n-1) * f'
+          if (g.kind === 'number') {
             const n = g.value;
             if (n === 0) return { kind: 'number', value: 0 };
-            if (n === 1) return { kind: 'number', value: 1 };
-            if (n === 2) {
+            if (n === 1) return differentiate(f, variable);
+            if (f.kind === 'variable') {
+              if (n === 2) {
+                return {
+                  kind: 'binary',
+                  op: '*',
+                  left: { kind: 'number', value: 2 },
+                  right: f,
+                };
+              }
               return {
                 kind: 'binary',
                 op: '*',
-                left: { kind: 'number', value: 2 },
-                right: f,
+                left: { kind: 'number', value: n },
+                right: {
+                  kind: 'binary',
+                  op: '^',
+                  left: f,
+                  right: { kind: 'number', value: n - 1 },
+                },
               };
             }
-            return {
-              kind: 'binary',
-              op: '*',
-              left: { kind: 'number', value: n },
-              right: {
-                kind: 'binary',
-                op: '^',
-                left: f,
-                right: { kind: 'number', value: n - 1 },
-              },
-            };
+            // General base: n * f^(n-1) * df (avoids division by f — no NaN at zeros)
+            return mul(
+              { kind: 'number', value: n },
+              mul(
+                {
+                  kind: 'binary',
+                  op: '^',
+                  left: f,
+                  right: { kind: 'number', value: n - 1 },
+                },
+                differentiate(f, variable),
+              ),
+            );
           }
 
           // Special case: n^x (constant^n with variable exponent)
@@ -175,7 +189,7 @@ function differentiateCall(expr: Expr & { kind: 'call' }, variable: string): Exp
     case 'cos':
       return mul(unary('-', call('sin', f)), df);
     case 'tan':
-      return mul(div(one, call('cos', pow(f, 2))), df);
+      return mul(div(one, pow(call('cos', f), 2)), df);
     case 'asin':
       return mul(df, div(one, call('sqrt', sub(one, pow(f, 2)))));
     case 'acos':
@@ -187,7 +201,7 @@ function differentiateCall(expr: Expr & { kind: 'call' }, variable: string): Exp
     case 'cosh':
       return mul(call('sinh', f), df);
     case 'tanh':
-      return mul(div(one, call('cosh', pow(f, 2))), df);
+      return mul(div(one, pow(call('cosh', f), 2)), df);
     case 'exp':
       return mul(call('exp', f), df);
     case 'ln':

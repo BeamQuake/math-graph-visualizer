@@ -43,7 +43,7 @@ export const PRESETS: FunctionPreset[] = [
     type: 'gaussian',
     params: { a: 1, b: 0, c: 1 },
     paramOrder: ['a', 'b', 'c'],
-    expr: '1*exp(-(x-0)^2/(2*1^2))',
+    expr: 'exp(-x^2/2)',
     description: 'Gauß-Glocke — Statistik',
   },
   {

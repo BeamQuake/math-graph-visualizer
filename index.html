@@ -53,6 +53,7 @@
 
         <section class="canvas-wrapper" id="canvas-wrapper">
           <canvas id="graph-canvas"></canvas>
+          <button id="btn-zoom-fit" class="btn-zoom-fit" title="Alle Punkte ins sichtbare Bereich machen">◎</button>
           <div class="canvas-hud" id="canvas-hud">
             <span class="hud-coords" id="hud-coords"></span>
           </div>
@@ -86,6 +87,11 @@
             </div>
 
             <div class="toggle-list">
+              <label class="toggle-item" id="toggle-integral">
+                <span class="toggle-label">Integral</span>
+                <input type="checkbox" class="toggle-checkbox" />
+                <span class="toggle-knob"></span>
+              </label>
               <label class="toggle-item" id="toggle-helpers">
                 <span class="toggle-label">Hilfslinien</span>
                 <input type="checkbox" class="toggle-checkbox" />

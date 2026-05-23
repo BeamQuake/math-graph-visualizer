@@ -2,7 +2,36 @@
 
 Math function graphing + calculus analysis tool. Single-page app, German UI.
 
-**Stack:** TypeScript 5, Vite 6, SCSS, HTML Canvas 2D. Zero runtime deps.
+**Stack:** TypeScript 5, Vite 6, Vitest 3, SCSS, HTML Canvas 2D. Zero runtime deps.
+
+---
+
+## Quick Reference (Agent TL;DR)
+
+See **`AGENTS.md`** for full quick reference. This file has detailed system documentation.
+
+| Quick Stats | |
+|-------------|---|
+| Test files | 8 test files (`.test.ts`) |
+| Total tests | 264+ tests passing |
+| Commands | `npm test`, `npm run build`, `npm run dev`, `npm run lint` |
+
+### Priority Order (Highest → Lowest)
+1. `src/math/*` — Pure logic, always test these first
+2. `src/ui/format.ts`, `src/render/animation.ts` — Pure UI utilities
+3. Everything else (DOM/Canvas dependent)
+
+### Test Writing Pattern
+```typescript
+function evalAt(input: string, x: number): number {
+  const expr = Parser.parse(input);
+  return evaluate(expr, { x });
+}
+// Use expect().toBeCloseTo() for floating point
+```
+
+### Known Bug
+`differentiate.ts:178,190` — `tan/tanh` derivatives compute `cos(x²)` instead of `cos²(x)`. Tests skipped.
 
 ---
 
