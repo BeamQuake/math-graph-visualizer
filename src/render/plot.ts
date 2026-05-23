@@ -12,6 +12,63 @@ export interface PlotOptions {
 }
 
 const SAMPLE_RESOLUTION = 2;
+const ASYMPTOTE_BISECT_STEPS = 18;
+
+/** Bisect between last valid point and NaN x to push a point closer to the asymptote. */
+export function extendTowardAsymptote(
+  points: { x: number; y: number }[],
+  expr: Expr,
+  nanX: number,
+): void {
+  if (points.length === 0) return;
+  const prev = points[points.length - 1];
+  if (!Number.isFinite(prev.y)) return;
+
+  let loX = prev.x;
+  let hiX = nanX;
+  for (let j = 0; j < ASYMPTOTE_BISECT_STEPS; j++) {
+    const midX = (loX + hiX) / 2;
+    try {
+      const midY = evaluate(expr, { x: midX });
+      if (Number.isFinite(midY)) loX = midX;
+      else hiX = midX;
+    } catch {
+      hiX = midX;
+    }
+  }
+  if (Math.abs(loX - prev.x) <= 1e-12) return;
+  try {
+    const extY = evaluate(expr, { x: loX });
+    if (Number.isFinite(extY)) points.push({ x: loX, y: extY });
+  } catch { /* skip */ }
+}
+
+/** Bisect from a NaN x toward a valid x to push a point at the domain boundary. */
+export function extendBackwardFromNan(
+  points: { x: number; y: number }[],
+  expr: Expr,
+  nanX: number,
+  validX: number,
+): void {
+  if (nanX >= validX - 1e-12) return;
+  let loX = nanX;
+  let hiX = validX;
+  for (let j = 0; j < ASYMPTOTE_BISECT_STEPS; j++) {
+    const midX = (loX + hiX) / 2;
+    try {
+      const midY = evaluate(expr, { x: midX });
+      if (Number.isFinite(midY)) hiX = midX;
+      else loX = midX;
+    } catch {
+      loX = midX;
+    }
+  }
+  if (hiX >= validX - 1e-12) return;
+  try {
+    const extY = evaluate(expr, { x: hiX });
+    if (Number.isFinite(extY)) points.push({ x: hiX, y: extY });
+  } catch { /* skip */ }
+}
 
 export class FunctionPlotter {
   plot(
@@ -28,22 +85,30 @@ export class FunctionPlotter {
     const asymptoteThreshold = (yMax - yMin) * 3;
 
     const points: { x: number; y: number }[] = [];
+    let lastNanX = NaN;
     for (let i = 0; i <= numSamples; i++) {
       const x = xMin + i * step;
       let y: number;
       try {
         y = evaluate(expr, { x });
       } catch {
+        lastNanX = x;
+        extendTowardAsymptote(points, expr, x);
         if (points.length > 0) points.push({ x, y: NaN });
         continue;
       }
 
       if (!Number.isFinite(y)) {
+        lastNanX = x;
+        extendTowardAsymptote(points, expr, x);
         if (points.length > 0) points.push({ x, y: NaN });
         continue;
       }
 
-      if (points.length > 0 && Number.isFinite(points[points.length - 1].y)) {
+      if (Number.isFinite(lastNanX)) {
+        extendBackwardFromNan(points, expr, lastNanX, x);
+        lastNanX = NaN;
+      } else if (points.length > 0 && Number.isFinite(points[points.length - 1].y)) {
         const prevY = points[points.length - 1].y;
         if (Math.abs(y - prevY) > asymptoteThreshold) {
           points.push({ x, y: NaN });

@@ -398,14 +398,14 @@ export function computeDefiniteIntegral(expr: Expr, a: number, b: number, steps:
 
   const fa = f(expr, a);
   const fb = f(expr, b);
-  if (!Number.isFinite(fa) || !Number.isFinite(fb)) return 0;
+  if (!Number.isFinite(fa) || !Number.isFinite(fb)) return NaN;
 
   const tol = 1e-6 / steps;
 
   function adaptiveSimpson(lo: number, hi: number, fLo: number, fHi: number, depth: number): number {
     const mid = (lo + hi) / 2;
     const fMid = f(expr, mid);
-    if (!Number.isFinite(fMid)) return 0;
+    if (!Number.isFinite(fMid)) return NaN;
 
     const h = hi - lo;
     const S = (h / 6) * (fLo + 4 * fMid + fHi);
@@ -414,7 +414,7 @@ export function computeDefiniteIntegral(expr: Expr, a: number, b: number, steps:
     const rightMid = (mid + hi) / 2;
     const fLeftMid = f(expr, leftMid);
     const fRightMid = f(expr, rightMid);
-    if (!Number.isFinite(fLeftMid) || !Number.isFinite(fRightMid)) return S;
+    if (!Number.isFinite(fLeftMid) || !Number.isFinite(fRightMid)) return NaN;
 
     const Sleft = (h / 12) * (fLo + 4 * fLeftMid + fMid);
     const Sright = (h / 12) * (fMid + 4 * fRightMid + fHi);
@@ -428,7 +428,7 @@ export function computeDefiniteIntegral(expr: Expr, a: number, b: number, steps:
   }
 
   const result = adaptiveSimpson(a, b, fa, fb, 0);
-  return Number.isFinite(result) ? result : 0;
+  return Number.isFinite(result) ? result : NaN;
 }
 
 export function findNearestZeros(points: PointOfInterest[], cursorX: number): { left: number | null; right: number | null } {

@@ -266,6 +266,45 @@ describe('computeDefiniteIntegral', () => {
     expect(forward).toBeCloseTo(2, 4);
     expect(backward).toBeCloseTo(-2, 4);
   });
+
+  it('ln(x-1) from 0 to 3 returns NaN (function undefined at left endpoint)', () => {
+    const expr = Parser.parse('ln(x-1)');
+    expect(computeDefiniteIntegral(expr, 0, 3)).toBeNaN();
+  });
+
+  it('ln(x-1) from 1 to 3 returns NaN (left endpoint -∞)', () => {
+    const expr = Parser.parse('ln(x-1)');
+    expect(computeDefiniteIntegral(expr, 1, 3)).toBeNaN();
+  });
+
+  it('ln(x-1) from 1.1 to 3 returns finite value', () => {
+    const expr = Parser.parse('ln(x-1)');
+    const result = computeDefiniteIntegral(expr, 1.1, 3);
+    expect(result).not.toBeNaN();
+    expect(result).toBeCloseTo(-0.283, 1);
+  });
+
+  it('ln(x-1) across domain boundary returns NaN', () => {
+    const expr = Parser.parse('ln(x-1)');
+    expect(computeDefiniteIntegral(expr, 0.5, 3)).toBeNaN();
+  });
+
+  it('1/x from -1 to 1 returns NaN (asymptote at 0)', () => {
+    const expr = Parser.parse('1/x');
+    expect(computeDefiniteIntegral(expr, -1, 1)).toBeNaN();
+  });
+
+  it('1/x from 1 to 2 returns finite (no asymptote in range)', () => {
+    const expr = Parser.parse('1/x');
+    const result = computeDefiniteIntegral(expr, 1, 2);
+    expect(result).not.toBeNaN();
+    expect(result).toBeCloseTo(Math.LN2, 3);
+  });
+
+  it('1/(x-3) from 0 to 6 returns NaN (asymptote at 3)', () => {
+    const expr = Parser.parse('1/(x-3)');
+    expect(computeDefiniteIntegral(expr, 0, 6)).toBeNaN();
+  });
 });
 
 describe('Calculus integration', () => {
@@ -399,5 +438,43 @@ describe('Calculus integration', () => {
     expect(max).toBeDefined();
     expect(max!.x).toBeCloseTo(3, 4);
     expect(max!.y).toBeCloseTo(1, 4);
+  });
+
+  it('reciprocal preset 1/(x-1) (c=0) has no zeros', () => {
+    const expr = Parser.parse('1/(x-1) + 0');
+    const result = analyzeFunction(expr, null, null, null, -200, 200);
+    expect(result.zeros).toHaveLength(0);
+  });
+
+  it('reciprocal with c=1 (1/(x-1)+1) has zero at x=0', () => {
+    const expr = Parser.parse('1/(x-1) + 1');
+    const result = analyzeFunction(expr, null, null, null, -200, 200);
+    expect(result.zeros.length).toBeGreaterThanOrEqual(1);
+    const z = result.zeros.find(z => Math.abs(z.x) < 0.1);
+    expect(z).toBeDefined();
+  });
+
+  it('gaussian preset exp(-x^2/2) has no zeros', () => {
+    const expr = Parser.parse('exp(-x^2/2)');
+    const result = analyzeFunction(expr, null, null, null, -200, 200);
+    expect(result.zeros).toHaveLength(0);
+  });
+
+  it('computeDefiniteIntegral NaN for reciprocal crossing asymptote', () => {
+    const expr = Parser.parse('1/(x-1) + 1');
+    expect(computeDefiniteIntegral(expr, 0, 2)).toBeNaN();
+  });
+
+  it('computeDefiniteIntegral finite for reciprocal not crossing asymptote', () => {
+    const expr = Parser.parse('1/(x-1) + 1');
+    const result = computeDefiniteIntegral(expr, 0, 0.5);
+    expect(result).not.toBeNaN();
+    expect(result).toBeLessThan(0);
+  });
+
+  it('findNearestZeros returns null for empty points', () => {
+    const result = findNearestZeros([], 0);
+    expect(result.left).toBeNull();
+    expect(result.right).toBeNull();
   });
 });

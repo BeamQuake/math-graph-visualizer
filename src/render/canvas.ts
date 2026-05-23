@@ -5,7 +5,7 @@ import type { PlotOptions } from './plot';
 import { drawGrid } from './grid';
 import { drawMarkers } from './markers';
 import { evaluate } from '../math/evaluator';
-import { computeDefiniteIntegral, findNearestZeros } from '../math/calculus';
+import { findNearestZeros } from '../math/calculus';
 
 export interface GraphConfig {
   fExpr: Expr | null;
@@ -241,18 +241,53 @@ export class GraphCanvas {
 
     const integrals: { fromX: number; toX: number; value: number; label: string }[] = [];
 
+    const { yMin, yMax } = this.camera.getVisibleRange(w, h);
+    const asymptoteThreshold = (yMax - yMin) * 3;
+
+    const scanToEnd = (startX: number, endX: number): number | null => {
+      const step = (endX - startX) / 200;
+      if (step === 0 || !Number.isFinite(step)) return 0;
+
+      const expr = cfg.fExpr!;
+      let prevY = this.f(expr, startX);
+      if (!Number.isFinite(prevY)) return null;
+
+      let area = 0;
+      for (let i = 1; i <= 200; i++) {
+        const x = startX + i * step;
+        const y = this.f(expr, x);
+
+        if (!Number.isFinite(y)) return null;
+
+        if (Number.isFinite(prevY) && prevY * y < 0 && Math.abs(y - prevY) > asymptoteThreshold) {
+          return null;
+        }
+
+        area += (prevY + y) * step / 2;
+        prevY = y;
+      }
+
+      return area;
+    };
+
     if (left !== null) {
-      const fromX = left;
-      const toX = cursorX;
-      const value = computeDefiniteIntegral(cfg.fExpr, fromX, toX);
-      integrals.push({ fromX, toX, value, label: `∫(${formatCoord(left)} → ·) = ${formatCoord(value)}` });
+      const value = scanToEnd(left, cursorX);
+      if (value !== null) {
+        const label = Number.isFinite(value)
+          ? `∫(${formatCoord(left)} → ·) = ${formatCoord(value)}`
+          : `∫(${formatCoord(left)} → ·) = undefiniert`;
+        integrals.push({ fromX: left, toX: cursorX, value, label });
+      }
     }
 
     if (right !== null) {
-      const fromX = cursorX;
-      const toX = right;
-      const value = computeDefiniteIntegral(cfg.fExpr, fromX, toX);
-      integrals.push({ fromX, toX, value, label: `∫(· → ${formatCoord(right)}) = ${formatCoord(value)}` });
+      const value = scanToEnd(cursorX, right);
+      if (value !== null) {
+        const label = Number.isFinite(value)
+          ? `∫(· → ${formatCoord(right)}) = ${formatCoord(value)}`
+          : `∫(· → ${formatCoord(right)}) = undefiniert`;
+        integrals.push({ fromX: cursorX, toX: right, value, label });
+      }
     }
 
     if (integrals.length === 0) return;
@@ -263,26 +298,48 @@ export class GraphCanvas {
 
     for (const iv of integrals) {
       const { fromX, toX, value } = iv;
+      if (!Number.isFinite(value)) continue;
       const numSamples = 200;
       const step = (toX - fromX) / numSamples;
 
       this.ctx.beginPath();
-      let first = true;
+      let segStart: number | null = null;
+      let prevY = NaN;
       for (let i = 0; i <= numSamples; i++) {
         const x = fromX + i * step;
-        const y = this.f(cfg.fExpr, x);
-        if (!Number.isFinite(y)) continue;
-        if (first) {
-          this.ctx.moveTo(x, y);
-          first = false;
+        const y = this.f(cfg.fExpr!, x);
+        if (Number.isFinite(y)) {
+          if (segStart === null) {
+            segStart = i;
+            this.ctx.moveTo(x, y);
+          } else if (Number.isFinite(prevY) && prevY * y < 0 && Math.abs(y - prevY) > asymptoteThreshold) {
+            const segEndX = fromX + (i - 1) * step;
+            const segStartX = fromX + segStart * step;
+            this.ctx.lineTo(segEndX, 0);
+            this.ctx.lineTo(segStartX, 0);
+            this.ctx.closePath();
+            segStart = i;
+            this.ctx.moveTo(x, y);
+          } else {
+            this.ctx.lineTo(x, y);
+          }
+          prevY = y;
         } else {
-          this.ctx.lineTo(x, y);
+          if (segStart !== null) {
+            const segEndX = fromX + (i - 1) * step;
+            const segStartX = fromX + segStart * step;
+            this.ctx.lineTo(segEndX, 0);
+            this.ctx.lineTo(segStartX, 0);
+            this.ctx.closePath();
+            segStart = null;
+          }
+          prevY = NaN;
         }
       }
-      if (first) continue;
+      if (segStart === null) continue;
 
       this.ctx.lineTo(toX, 0);
-      this.ctx.lineTo(fromX, 0);
+      this.ctx.lineTo(fromX + segStart * step, 0);
       this.ctx.closePath();
 
       this.ctx.fillStyle = value >= 0 ? 'rgba(0,200,100,0.25)' : 'rgba(200,50,50,0.25)';
