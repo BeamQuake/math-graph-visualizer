@@ -533,7 +533,7 @@ function formatCoord(v: number): string {
   const abs = Math.abs(v);
   if (abs < 0.001) return '0';
   if (abs < 1) return v.toFixed(2);
-  if (abs < 100) return v.toFixed(1);
+  if (abs < 100) return v.toFixed(2);
   if (abs < 10000) return v.toFixed(0);
   return v.toExponential(2);
 }
