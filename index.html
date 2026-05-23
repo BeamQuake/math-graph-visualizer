@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GraphViz — Funktions-Explorer</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>📈</text></svg>" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="header">
+        <div class="header__logo">
+          <span class="header__icon">∫</span>
+          <span class="header__title">GraphViz</span>
+        </div>
+        <div class="header__actions">
+          <button id="theme-toggle" class="btn-icon" aria-label="Design wechseln" title="Design wechseln">
+            <span class="icon-moon">🌙</span>
+            <span class="icon-sun">☀️</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="panel panel--left" id="function-panel">
+          <div class="panel__header">
+            <h2 class="panel__title">Funktion</h2>
+          </div>
+
+          <div class="panel__body">
+            <div class="preset-grid" id="type-presets"></div>
+
+          <div class="control-group" id="order-group">
+              <label class="label" for="function-order">Ordnung</label>
+              <div class="slider-row">
+                <input type="range" id="function-order" class="slider" min="1" max="6" value="3" />
+                <span class="slider-value" id="order-value">3</span>
+              </div>
+            </div>
+
+            <div id="params-container" class="params-container"></div>
+
+            <div class="control-group">
+              <label class="label">Funktionsterm</label>
+              <div class="function-display" id="function-display">
+                <span class="function-display__formula" id="formula-text">—</span>
+              </div>
+            </div>
+
+
+          </div>
+        </aside>
+
+        <section class="canvas-wrapper" id="canvas-wrapper">
+          <canvas id="graph-canvas"></canvas>
+          <div class="canvas-hud" id="canvas-hud">
+            <span class="hud-coords" id="hud-coords"></span>
+          </div>
+        </section>
+
+        <aside class="panel panel--right" id="derivative-panel">
+          <div class="panel__header">
+            <h2 class="panel__title">Analyse</h2>
+          </div>
+
+          <div class="panel__body">
+            <div class="toggle-list" id="derivative-toggles">
+              <label class="toggle-item" data-derivative="1">
+                <span class="toggle-swatch swatch--f1"></span>
+                <span class="toggle-label">f′(x)</span>
+                <input type="checkbox" class="toggle-checkbox" />
+                <span class="toggle-knob"></span>
+              </label>
+              <label class="toggle-item" data-derivative="2">
+                <span class="toggle-swatch swatch--f2"></span>
+                <span class="toggle-label">f″(x)</span>
+                <input type="checkbox" class="toggle-checkbox" />
+                <span class="toggle-knob"></span>
+              </label>
+              <label class="toggle-item" data-derivative="3">
+                <span class="toggle-swatch swatch--f3"></span>
+                <span class="toggle-label">f‴(x)</span>
+                <input type="checkbox" class="toggle-checkbox" />
+                <span class="toggle-knob"></span>
+              </label>
+            </div>
+
+            <div class="toggle-list">
+              <label class="toggle-item" id="toggle-helpers">
+                <span class="toggle-label">Hilfslinien</span>
+                <input type="checkbox" class="toggle-checkbox" />
+                <span class="toggle-knob"></span>
+              </label>
+              <label class="toggle-item" id="toggle-labels">
+                <span class="toggle-label">Punkte beschriften</span>
+                <input type="checkbox" class="toggle-checkbox" checked />
+                <span class="toggle-knob"></span>
+              </label>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="panel__header">
+              <h2 class="panel__title">Kurvendiskussion</h2>
+            </div>
+
+            <div id="info-points" class="info-points">
+              <p class="info-empty">Keine Funktion geladen</p>
+            </div>
+
+          </div>
+
+          <div class="water-viz" id="water-viz"></div>
+        </aside>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

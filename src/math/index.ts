@@ -1,0 +1,10 @@
+export { Parser, ParseError } from './parser';
+export { evaluate, isFiniteNumber } from './evaluator';
+export { differentiate } from './differentiate';
+export { simplify, exprToString } from './simplify';
+export { analyzeFunction } from './calculus';
+export type { CalculusResult } from './calculus';
+export { PRESETS, getParamDisplay } from './presets';
+export type { FunctionPreset } from './types';
+export { buildExpression, buildParamList, buildDefaultParams, presetToParams } from './function-builder';
+export type { FunctionParams, FunctionType } from './types';

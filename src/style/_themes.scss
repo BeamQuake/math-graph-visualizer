@@ -1,0 +1,73 @@
+@use 'variables' as *;
+
+// ─── Theme Variables ────────────────────────────────────────────
+
+%theme-dark {
+  --bg: #{$dark-bg};
+  --bg-panel: #{$dark-bg-panel};
+  --bg-input: #{$dark-bg-input};
+  --border: #{$dark-border};
+  --border-hover: #{$dark-border-hover};
+  --text: #{$dark-text};
+  --text-dim: #{$dark-text-dim};
+  --text-bright: #{$dark-text-bright};
+  --grid-major: #{$dark-grid-major};
+  --grid-minor: #{$dark-grid-minor};
+  --axes: #{$dark-axes};
+  --accent: #{$dark-accent};
+  --surface-raised: #{$dark-surface-raised};
+  --f-color: #{$dark-f-color};
+  --f1-color: #{$dark-f1-color};
+  --f2-color: #{$dark-f2-color};
+  --f3-color: #{$dark-f3-color};
+  --max-color: #{$dark-max-color};
+  --min-color: #{$dark-min-color};
+  --inflection-color: #{$dark-inflection-color};
+  --zero-color: #{$dark-zero-color};
+  --math-purple: #a855f7;
+  --math-cyan: #06b6d4;
+  --math-glow: 0 0 12px rgba(0, 255, 136, 0.15);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --backdrop: blur(16px);
+}
+
+%theme-light {
+  --bg: #{$light-bg};
+  --bg-panel: #{$light-bg-panel};
+  --bg-input: #{$light-bg-input};
+  --border: #{$light-border};
+  --border-hover: #{$light-border-hover};
+  --text: #{$light-text};
+  --text-dim: #{$light-text-dim};
+  --text-bright: #{$light-text-bright};
+  --grid-major: #{$light-grid-major};
+  --grid-minor: #{$light-grid-minor};
+  --axes: #{$light-axes};
+  --accent: #{$light-accent};
+  --surface-raised: #{$light-surface-raised};
+  --f-color: #{$light-f-color};
+  --f1-color: #{$light-f1-color};
+  --f2-color: #{$light-f2-color};
+  --f3-color: #{$light-f3-color};
+  --max-color: #{$light-max-color};
+  --min-color: #{$light-min-color};
+  --inflection-color: #{$light-inflection-color};
+  --zero-color: #{$light-zero-color};
+  --math-purple: #9333ea;
+  --math-cyan: #0891b2;
+  --math-glow: 0 0 12px rgba(0, 135, 81, 0.12);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --backdrop: blur(16px);
+}
+
+.theme-dark {
+  @extend %theme-dark;
+}
+
+.theme-light {
+  @extend %theme-light;
+}
+
+:root {
+  @extend %theme-dark;
+}

@@ -1,0 +1,730 @@
+@use 'variables' as *;
+
+// ─── Reset ──────────────────────────────────────────────────────
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  transition: background $transition-slow, color $transition-normal;
+}
+
+// ─── Header ─────────────────────────────────────────────────────
+.header {
+  height: $header-height;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 $space-md;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: var(--backdrop);
+  -webkit-backdrop-filter: var(--backdrop);
+  position: relative;
+  z-index: $z-header;
+
+  &__logo {
+    display: flex;
+    align-items: center;
+    gap: $space-sm;
+  }
+
+  &__icon {
+    font-size: $font-xl;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: $font-mono;
+  }
+
+  &__title {
+    font-size: $font-md;
+    font-weight: 700;
+    color: var(--text-bright);
+    letter-spacing: -0.02em;
+  }
+
+  &__actions {
+    display: flex;
+    gap: $space-sm;
+  }
+}
+
+// ─── Buttons ────────────────────────────────────────────────────
+.btn-icon {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-base;
+  transition: all $transition-fast;
+
+  &:hover {
+    border-color: var(--border-hover);
+    background: var(--surface-raised);
+  }
+
+  .icon-sun { display: none; }
+  .icon-moon { display: inline; }
+}
+
+.theme-light .btn-icon {
+  .icon-sun { display: inline; }
+  .icon-moon { display: none; }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-xs;
+  padding: $space-sm $space-md;
+  border: 1px solid var(--border);
+  border-radius: $radius-sm;
+  background: var(--surface-raised);
+  color: var(--text);
+  font-size: $font-sm;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  &--small {
+    padding: $space-xs $space-sm;
+    font-size: $font-xs;
+  }
+}
+
+// ─── Layout ─────────────────────────────────────────────────────
+.layout {
+  display: flex;
+  height: calc(100vh - $header-height);
+  gap: $panel-gap;
+  padding: $panel-gap;
+  overflow: hidden;
+}
+
+.panel {
+  width: $panel-width;
+  min-width: $panel-width;
+
+  &--left {
+    width: $panel-width-left;
+    min-width: $panel-width-left;
+  }
+
+  &--right {
+    width: $panel-width-right;
+    min-width: $panel-width-right;
+  }
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: $radius-md;
+  backdrop-filter: var(--backdrop);
+  -webkit-backdrop-filter: var(--backdrop);
+  padding: $space-md $space-md $space-lg;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__title {
+    font-size: $font-sm;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+  }
+
+  &__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__subtitle {
+    font-size: $font-xs;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: $space-sm;
+  }
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+  }
+}
+
+.canvas-wrapper {
+  flex: 1;
+  position: relative;
+  border-radius: $radius-md;
+  overflow: hidden;
+  background: var(--bg);
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+}
+
+.canvas-hud {
+  position: absolute;
+  bottom: $space-sm;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: $radius-sm;
+  padding: $space-xs $space-md;
+  font-size: $font-xs;
+  font-family: $font-mono;
+  color: var(--text-dim);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity $transition-fast;
+
+  &.visible {
+    opacity: 1;
+  }
+}
+
+// ─── Controls ───────────────────────────────────────────────────
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.select {
+  width: 100%;
+  padding: $space-sm $space-md;
+  border: 1px solid var(--border);
+  border-radius: $radius-sm;
+  background: var(--bg-input);
+  color: var(--text-bright);
+  font-size: $font-sm;
+  font-family: $font-sans;
+  cursor: pointer;
+  transition: border-color $transition-fast;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23c8d0e0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+}
+
+.theme-light .select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%232c3e50' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+}
+
+.input {
+  width: 100%;
+  padding: $space-sm $space-md;
+  border: 1px solid var(--border);
+  border-radius: $radius-sm;
+  background: var(--bg-input);
+  color: var(--text-bright);
+  font-size: $font-sm;
+  transition: border-color $transition-fast;
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  &--mono {
+    font-family: $font-mono;
+    font-size: $font-xs;
+  }
+}
+
+.pro-input-wrapper {
+  display: flex;
+  gap: $space-xs;
+}
+
+// ─── Sliders ────────────────────────────────────────────────────
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+}
+
+.slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  outline: none;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 2px var(--accent);
+    cursor: pointer;
+    transition: transform $transition-fast;
+
+    &:hover {
+      transform: scale(1.2);
+    }
+  }
+
+  &::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 2px var(--accent);
+    cursor: pointer;
+  }
+}
+
+.slider-value {
+  min-width: 28px;
+  text-align: center;
+  font-size: $font-xs;
+  font-family: $font-mono;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.param-slider {
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+  padding: $space-xs 0;
+
+  &__label {
+    display: block;
+    color: var(--text);
+    font-size: $font-sm;
+    font-family: $font-mono;
+    font-weight: 500;
+    transition: color $transition-fast;
+  }
+
+  &__desc {
+    display: block;
+    color: var(--text-dim);
+    font-size: $font-xs;
+    font-family: $font-mono;
+    color: var(--text);
+    font-weight: 500;
+  }
+}
+
+.params-container {
+  display: flex;
+  flex-direction: column;
+}
+
+// ─── Toggles ────────────────────────────────────────────────────
+.toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+}
+
+.toggle-item {
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+  padding: 6px 0;
+  cursor: pointer;
+  user-select: none;
+
+  .toggle-label {
+    flex: 1;
+    font-size: $font-base;
+    font-weight: 500;
+  }
+}
+
+.toggle-checkbox {
+  display: none;
+}
+
+.toggle-knob {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--border);
+  transition: background $transition-fast;
+  flex-shrink: 0;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--text);
+    transition: transform $transition-fast, background $transition-fast;
+  }
+}
+
+.toggle-checkbox:checked + .toggle-knob {
+  background: var(--accent);
+
+  &::after {
+    transform: translateX(16px);
+    background: #fff;
+  }
+}
+
+.toggle-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+
+  &--f1 { background: var(--f1-color); }
+  &--f2 { background: var(--f2-color); }
+  &--f3 { background: var(--f3-color); }
+}
+
+// ─── Function Display ───────────────────────────────────────────
+.function-display {
+  padding: $space-sm $space-md;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: $radius-sm;
+  font-size: $font-md;
+  font-family: $font-mono;
+  line-height: 1.8;
+  overflow-x: auto;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  transition: all $transition-fast;
+  cursor: text;
+
+  &:focus-within {
+    border-color: var(--accent);
+  }
+
+  &:hover {
+    border-color: var(--border-hover);
+  }
+
+  &__formula {
+    font-weight: 500;
+    outline: none;
+  }
+}
+
+// ─── Syntax Highlighting for Math ───────────────────────────────
+.math-fn {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.math-num {
+  color: var(--f2-color);
+}
+
+.math-var {
+  color: var(--text-bright);
+  font-weight: 600;
+}
+
+.math-op {
+  color: var(--text-dim);
+}
+
+.math-paren {
+  color: var(--text-dim);
+}
+
+.math-const {
+  color: var(--f-color);
+  font-weight: 600;
+}
+
+.math-sup {
+  font-size: 0.7em;
+  vertical-align: super;
+  line-height: 1;
+}
+
+.math-frac {
+  font-size: 0.85em;
+}
+
+// ─── Info Points ────────────────────────────────────────────────
+.info-points {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.info-empty {
+  font-size: $font-sm;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.point-entry {
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+  padding: $space-xs $space-sm;
+  border-radius: $radius-sm;
+  font-size: $font-sm;
+  font-family: $font-mono;
+  transition: background $transition-fast;
+
+  &:hover {
+    background: var(--surface-raised);
+  }
+
+  &__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  &__label {
+    min-width: 24px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  &__coords {
+    color: var(--text);
+    font-weight: 500;
+  }
+}
+
+// ─── Pencil Viz ─────────────────────────────────────────────────
+.water-viz {
+  flex-shrink: 0;
+  height: 120px;
+  overflow: hidden;
+  cursor: crosshair;
+  position: relative;
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// ─── Divider ────────────────────────────────────────────────────
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: $space-xs 0;
+}
+
+// ─── Presets ────────────────────────────────────────────────────
+.preset-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.preset-btn {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-sm;
+  padding: $space-sm $space-md;
+  border: 1px solid var(--border);
+  border-radius: $radius-sm;
+  background: var(--surface-raised);
+  cursor: pointer;
+  text-align: left;
+  transition: all $transition-fast;
+  line-height: 1.4;
+
+  &:hover {
+    border-color: var(--accent);
+    background: rgba(74, 158, 255, 0.06);
+    box-shadow: 0 0 16px rgba(74, 158, 255, 0.08);
+  }
+
+  &--active {
+    border-color: var(--accent);
+    background: rgba(74, 158, 255, 0.08);
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+    box-shadow: 0 0 6px currentColor;
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__label {
+    display: block;
+    color: var(--text);
+    font-size: $font-md;
+    font-family: $font-mono;
+    font-weight: 500;
+    transition: color $transition-fast;
+  }
+
+  &__desc {
+    display: block;
+    color: var(--text-dim);
+    font-size: $font-sm;
+    font-family: $font-sans;
+    margin-top: 1px;
+    line-height: 1.3;
+    transition: color $transition-fast;
+  }
+
+  &:hover &__label {
+    color: var(--accent);
+  }
+
+  &:hover &__desc {
+    color: var(--text);
+  }
+
+  &--active &__label {
+    color: var(--accent);
+  }
+}
+
+.preset-btn__dot--polynomial { color: var(--f-color); }
+.preset-btn__dot--exponential { color: var(--accent); }
+.preset-btn__dot--logarithmic { color: var(--f3-color); }
+.preset-btn__dot--gaussian { color: var(--math-cyan); }
+.preset-btn__dot--rational { color: var(--inflection-color); }
+.preset-btn__dot--reciprocal { color: var(--f2-color); }
+
+// ─── Responsive Tablet ──────────────────────────────────────────
+@media (max-width: $bp-desktop) {
+  .layout {
+    flex-direction: column;
+    height: auto;
+    overflow: auto;
+  }
+
+  .panel {
+    width: 100%;
+    min-width: 0;
+    max-height: 300px;
+  }
+
+  .canvas-wrapper {
+    height: 50vh;
+    min-height: 300px;
+  }
+
+  .preset-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .preset-btn {
+    align-items: center;
+
+    &__dot {
+      margin-top: 0;
+    }
+
+    &__label {
+      text-align: center;
+    }
+
+    &__desc {
+      text-align: center;
+    }
+  }
+}
+
+// ─── Responsive Phone ───────────────────────────────────────────
+@media (max-width: $bp-tablet) {
+  .layout {
+    padding: $space-sm;
+    gap: $space-sm;
+  }
+
+  .panel {
+    padding: $space-sm;
+    max-height: 250px;
+  }
+
+  .canvas-wrapper {
+    height: 45vh;
+    min-height: 250px;
+  }
+
+  .preset-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .header {
+    padding: 0 $space-sm;
+
+    &__title {
+    font-size: $font-md;
+    }
+  }
+}
