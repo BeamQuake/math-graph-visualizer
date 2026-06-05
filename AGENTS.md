@@ -10,12 +10,12 @@
 
 | Command | Purpose |
 |---------|---------|
-| `npm test` | Run all tests (Vitest) |
-| `npm run test:watch` | Run tests in watch mode |
-| `npm run build` | Type check + build |
-| `npm run lint` / `npm run typecheck` | TypeScript type check only |
-| `npm run dev` | Start dev server |
-| `npm run format` | Prettier format |
+| `pnpm test` | Run all tests (Vitest) |
+| `pnpm test:watch` | Run tests in watch mode |
+| `pnpm build` | Type check + build |
+| `pnpm lint` / `pnpm typecheck` | TypeScript type check only |
+| `pnpm dev` | Start dev server |
+| `pnpm format` | Prettier format |
 
 ---
 
@@ -153,8 +153,8 @@ src/
 1. **Create test file** with same name: `foo.ts` → `foo.test.ts`
 2. **Put it in same directory** as the source
 3. **Use existing patterns** from nearby test files
-4. **Run `npm test`** before committing
-5. **Run `npm run lint`** (type check) before committing
+4. **Run `pnpm test`** before committing
+5. **Run `pnpm lint`** (type check) before committing
 
 ---
 

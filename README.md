@@ -5,20 +5,20 @@ Interactive math function graphing tool with symbolic differentiation, curve ana
 ## Quick Start
 
 ```bash
-npm install   # install dependencies (no runtime deps needed)
-npm run dev   # start dev server → http://localhost:5173
+pnpm install   # install dependencies (no runtime deps needed)
+pnpm dev       # start dev server → http://localhost:5173
 ```
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Type-check + production build → `dist/` |
-| `npm run preview` | Preview production build |
-| `npm test` | Run all tests (Vitest) |
-| `npm run lint` / `npm run typecheck` | TypeScript type-check only |
-| `npm run format` | Format code with Prettier |
+| `pnpm dev` | Start development server |
+| `pnpm build` | Type-check + production build → `dist/` |
+| `pnpm preview` | Preview production build |
+| `pnpm test` | Run all tests (Vitest) |
+| `pnpm lint` / `pnpm typecheck` | TypeScript type-check only |
+| `pnpm format` | Format code with Prettier |
 
 ## Usage
 

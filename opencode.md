@@ -14,7 +14,7 @@ See **`AGENTS.md`** for full quick reference. This file has detailed system docu
 |-------------|---|
 | Test files | 8 test files (`.test.ts`) |
 | Total tests | 264+ tests passing |
-| Commands | `npm test`, `npm run build`, `npm run dev`, `npm run lint` |
+| Commands | `pnpm test`, `pnpm build`, `pnpm dev`, `pnpm lint` |
 
 ### Priority Order (Highest → Lowest)
 1. `src/math/*` — Pure logic, always test these first
