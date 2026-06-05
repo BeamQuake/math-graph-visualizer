@@ -1,4 +1,4 @@
-# GraphViz — Funktions-Explorer
+# Math Graph Visualizer — Funktions-Explorer
 
 Interactive math function graphing tool with symbolic differentiation, curve analysis, and integral visualization.
 
